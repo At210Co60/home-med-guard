@@ -145,6 +145,7 @@ git branch -d feat/stock-batch-fefo
 | `remote: Repository not found` | ① 邀请没接受 ② 用错 GitHub 账号 ③ 地址打错 | 先接受邀请；`控制面板 → 凭据管理器 → Windows 凭据` 删掉 `git:https://github.com`，重新登录自己的账号 |
 | `Permission denied (publickey)` | 用了 SSH 地址但没配 key | 换回 https：`git remote set-url origin https://github.com/At210Co60/home-med-guard.git` |
 | `Authentication failed` / 反复弹窗 | 凭据存了别人的账号 | 同上，删掉 Windows 凭据后重新授权 |
+| `schannel: ... CRYPT_E_NO_REVOCATION_CHECK` | 证书吊销检查被网络/代理挡住（国内常见） | 单次：`git -c http.schannelCheckRevoke=false push`；长期：`git config --global http.schannelCheckRevoke false` |
 | `Failed to connect to github.com port 443` / 超时 | 网络问题（国内访问 github.com 常抖，`api.github.com` 通不代表 git 通） | 开代理/VPN；设代理：`git config --global http.proxy http://127.0.0.1:7890` 和 `git config --global https.proxy http://127.0.0.1:7890`；关代理：`git config --global --unset http.proxy` |
 | `Updates were rejected because the remote contains work you do not have` | 远端有别人新提交 | `git pull --rebase origin main` → 解冲突 → 再 push |
 | `protected branch hook declined` / `remote rejected` | 直接推了 `main` | 改成推 `feat/...` 分支，走 PR |

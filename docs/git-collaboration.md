@@ -238,6 +238,8 @@ git restore --staged <file>     # 从暂存区撤回（保留工作区）
 |---|---|---|
 | `remote: Repository not found` | 仓库没建 / owner 或名字写错 / 邀请没接受 | 核对 `https://github.com/At210Co60/home-med-guard`；让 Owner 重新邀请并接受 |
 | `Authentication failed` / 弹窗反复要密码 | 凭据过期或存了别的账号 | `控制面板 → 凭据管理器 → Windows 凭据` 删除 `git:https://github.com`；或用 PAT |
+| `schannel: next InitializeSecurityContext failed: CRYPT_E_NO_REVOCATION_CHECK` | 证书吊销检查被网络/代理挡住（国内常见） | 单次：`git -c http.schannelCheckRevoke=false push`；长期：`git config --global http.schannelCheckRevoke false` |
+| `Failed to connect to github.com port 443` / 连接超时 | 网络抖动或被墙（`api.github.com` 通不代表 git 通） | 开代理/VPN；`git config --global http.proxy http://127.0.0.1:7890`（`https.proxy` 同） |
 | `Updates were rejected because the remote contains work that you do not have` | 远端有你没有的提交 | `git pull --rebase origin main` → 解冲突 → 再 push |
 | `! [rejected] ... (non-fast-forward)` | 自己 rebase/amend 过，历史变了 | `git push --force-with-lease`（**只对自己分支**，永不对 main） |
 | `pre-receive hook declined` / `protected branch hook declined` | 直接 push 了 `main`，被分支保护拦 | 改推 `feat/...` 分支，再开 PR |
