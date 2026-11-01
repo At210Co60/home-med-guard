@@ -130,6 +130,8 @@ git push -u origin main
 
 ### 2.2 另外两人（第一次加入）
 
+> 📤 **直接把 [teammate-onboarding.md](teammate-onboarding.md) 转发给对方**：那是给他们看的独立文档，从"接受邀请"到"第一次 push 成功"每一步都有命令和报错对照表，不需要他们读本文。
+
 ```bash
 git clone https://github.com/At210Co60/home-med-guard.git
 cd home-med-guard
