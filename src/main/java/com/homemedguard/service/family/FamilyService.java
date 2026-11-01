@@ -79,19 +79,18 @@ public class FamilyService {
     }
 
     @Transactional
-    public String issueInviteCode(Long userId) {
+    public FamilyInviteEntity issueInviteCode(Long userId) {
         FamilyMemberEntity membership = requireMembership(userId);
         if (!FAMILY_ADMIN.equals(membership.getRole())) {
             throw new BizException(ErrorCode.FORBIDDEN, "只有家庭管理员可以生成邀请码");
         }
-        String code = randomCode();
         FamilyInviteEntity invite = new FamilyInviteEntity();
         invite.setFamilyId(membership.getFamilyId());
-        invite.setCode(code);
+        invite.setCode(randomCode());
         invite.setCreatedBy(userId);
         invite.setExpiresAt(LocalDateTime.now().plus(authProperties.getInviteTtl()));
         inviteMapper.insert(invite);
-        return code;
+        return invite;
     }
 
     /**

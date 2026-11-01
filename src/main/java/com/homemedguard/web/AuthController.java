@@ -1,6 +1,7 @@
 package com.homemedguard.web;
 
 import com.homemedguard.common.api.Result;
+import com.homemedguard.common.audit.AuditLog;
 import com.homemedguard.service.auth.AuthService;
 import com.homemedguard.service.auth.entity.SysUserEntity;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,7 @@ public class AuthController {
     }
 
     @Operation(summary = "注册（同时自动创建个人家庭）")
+    @AuditLog(action = "AUTH_REGISTER", targetType = "sys_user")
     @PostMapping("/register")
     public Result<PublicUser> register(@RequestBody RegisterForm form) {
         SysUserEntity user = authService.register(form.username(), form.password(), form.nickname());
@@ -41,18 +43,21 @@ public class AuthController {
     }
 
     @Operation(summary = "登录，返回 access token 与 refresh token")
+    @AuditLog(action = "AUTH_LOGIN", targetType = "sys_user")
     @PostMapping("/login")
     public Result<AuthService.TokenPair> login(@RequestBody LoginForm form) {
         return Result.ok(authService.login(form.username(), form.password()));
     }
 
     @Operation(summary = "换一组新 token，旧的 refresh token 立即作废")
+    @AuditLog(action = "AUTH_REFRESH", targetType = "refresh_token")
     @PostMapping("/refresh")
     public Result<AuthService.TokenPair> refresh(@RequestBody RefreshForm form) {
         return Result.ok(authService.refresh(form.refreshToken()));
     }
 
     @Operation(summary = "登出：吊销本次 refresh token")
+    @AuditLog(action = "AUTH_LOGOUT", targetType = "refresh_token")
     @PostMapping("/logout")
     public Result<Void> logout(@RequestBody RefreshForm form) {
         authService.logout(form.refreshToken());

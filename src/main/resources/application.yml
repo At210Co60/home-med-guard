@@ -53,6 +53,10 @@ app:
     access-token-ttl: 2h
     refresh-token-ttl: 30d
     invite-ttl: 24h
+    # 第一个系统管理员：只在本地/测试显式配置，仓库里永远留空
+    bootstrap:
+      username: ${HMG_BOOTSTRAP_USER:}
+      password: ${HMG_BOOTSTRAP_PASSWORD:}
   crypto:
     # 健康数据字段级加密主密钥（base64 的 32 字节），留空且启用 ① 时启动失败
     data-key: ${HMG_DATA_KEY:}

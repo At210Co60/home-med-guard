@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.homemedguard.service.rule.governance.GovernedRule;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("spacing_rule")
-public class SpacingRuleEntity {
+public class SpacingRuleEntity implements GovernedRule {
 
     @TableId(type = IdType.AUTO)
     private Long id;

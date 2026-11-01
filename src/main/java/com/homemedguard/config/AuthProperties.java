@@ -21,4 +21,19 @@ public class AuthProperties {
 
     /** 家庭邀请码有效期。 */
     private Duration inviteTtl = Duration.ofHours(24);
+
+    /**
+     * 引导管理员：仓库里不放任何口令，本地/测试在自己的配置里显式打开。
+     * 不做这个就没法产生第一个 SYS_ADMIN（提升接口本身要求 SYS_ADMIN，会死锁）。
+     */
+    private BootstrapAdmin bootstrap = new BootstrapAdmin();
+
+    @Getter
+    @Setter
+    public static class BootstrapAdmin {
+
+        private String username;
+
+        private String password;
+    }
 }

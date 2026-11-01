@@ -1,12 +1,14 @@
 package com.homemedguard.web;
 
 import com.homemedguard.common.api.Result;
+import com.homemedguard.common.audit.AuditLog;
 import com.homemedguard.service.auth.core.SessionUser;
 import com.homemedguard.service.family.FamilyModule;
 import com.homemedguard.service.family.FamilyService;
 import com.homemedguard.service.family.MemberProfileService;
 import com.homemedguard.service.family.ProfileSpec;
 import com.homemedguard.service.family.entity.FamilyEntity;
+import com.homemedguard.service.family.entity.FamilyInviteEntity;
 import com.homemedguard.service.family.entity.FamilyMemberEntity;
 import com.homemedguard.service.family.entity.FamilyMemberProfileEntity;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,13 +78,16 @@ public class FamilyController {
         return Result.ok(new FamilyView(family.getId(), family.getName(), myRole, members));
     }
 
-    @Operation(summary = "生成家庭邀请码（24 小时有效，一次使用）")
+    @Operation(summary = "生成家庭邀请码（默认 24 小时有效，一次使用）")
+    @AuditLog(action = "FAMILY_INVITE", targetType = "family_invite")
     @PostMapping("/invite")
     public Result<InviteView> invite() {
-        return Result.ok(new InviteView(familyService.issueInviteCode(SessionUser.requireId()), "86400"));
+        FamilyInviteEntity invite = familyService.issueInviteCode(SessionUser.requireId());
+        return Result.ok(new InviteView(invite.getCode(), invite.getExpiresAt().toString()));
     }
 
     @Operation(summary = "用邀请码加入家庭")
+    @AuditLog(action = "FAMILY_JOIN", targetType = "family_member")
     @PostMapping("/join")
     public Result<FamilyView> join(@RequestBody JoinForm form) {
         Long userId = SessionUser.requireId();
@@ -92,6 +97,7 @@ public class FamilyController {
     }
 
     @Operation(summary = "新增无账号成员（老人/儿童），同时写档案")
+    @AuditLog(action = "MEMBER_ADD", targetType = "family_member")
     @PostMapping("/members")
     public Result<ProfileView> addMember(@RequestBody NewMemberForm form) {
         FamilyMemberEntity member = familyService.addMember(SessionUser.requireId(), form.relation());
@@ -100,6 +106,7 @@ public class FamilyController {
     }
 
     @Operation(summary = "更新成员档案（健康字段加密入库）")
+    @AuditLog(action = "MEMBER_PROFILE_UPDATE", targetType = "family_member_profile")
     @PutMapping("/members/{memberId}/profile")
     public Result<ProfileView> updateProfile(@PathVariable Long memberId, @RequestBody ProfileSpec spec) {
         Long userId = SessionUser.requireId();

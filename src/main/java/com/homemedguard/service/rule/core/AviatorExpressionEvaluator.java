@@ -24,6 +24,20 @@ public class AviatorExpressionEvaluator {
         return expr != null && !expr.isBlank();
     }
 
+    /** 发布前语法体检：写错的表达式不允许进规则库，进了也只会被记成"求值失败"。 */
+    public boolean validates(String expr) {
+        if (!hasExpression(expr)) {
+            return true;
+        }
+        try {
+            engine.compile(expr, false);
+            return true;
+        } catch (RuntimeException ex) {
+            log.warn("规则表达式编译失败 expr={} cause={}", expr, ex.getMessage());
+            return false;
+        }
+    }
+
     public Optional<Boolean> test(String expr, Map<String, Object> env) {
         try {
             Object value = engine.execute(expr, env, true);
