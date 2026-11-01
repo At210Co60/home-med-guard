@@ -1,0 +1,85 @@
+# ===== Java / Maven =====
+target/
+build/
+out/
+*.class
+*.war
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+# Maven wrapper 的 jar 必须入库（否则别人无法 ./mvnw）
+!/.mvn/wrapper/maven-wrapper.jar
+!/.mvn/wrapper/maven-wrapper.properties
+
+# ===== 前端（Vite / Vue3）=====
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+frontend/coverage/
+frontend/*.tsbuildinfo
+dist/
+.vite/
+# 前端产物由 frontend-maven-plugin 在打包时生成，不进仓库
+src/main/resources/static/
+src/main/resources/static/**
+!src/main/resources/static/.gitkeep
+
+# ===== 本地配置与密钥（公有仓库红线）=====
+application-local.yml
+application-local.yaml
+application-local.properties
+application-*.local.yml
+.env
+.env.*
+!.env.example
+*.p12
+*.jks
+*.keystore
+*.pem
+*.key
+!docs/demo/**/*.key.example
+
+# ===== 运行时数据 =====
+data/
+data/files/
+logs/
+*.log
+*.log.gz
+*.gz.tmp
+uploads/
+temp/
+tmp/
+
+# ===== IDE / 编辑器 =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+.settings/
+.classpath
+.project
+.factorypath
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ===== 构建与临时产物 =====
+*.tmp
+*.bak
+*.orig
+*.rej
+*.pid
+*.hprof
+
+# ===== 大文件约定：说明书图片/扫描件走 data/files/ 运行目录；需要入库的演示资源放 docs/demo/ 且单张 ≤200KB =====
+# （刻意不忽略 *.zip，避免误伤需要入库的小体积演示包；>5MB 的文件先问过全队）

@@ -1,0 +1,48 @@
+# 统一换行：仓库内统一存 LF，Windows 检出按 core.autocrlf 处理
+* text=auto
+
+# 明确 LF 的文本（脚本在 Linux/CI 上跑）
+*.sh   text eol=lf
+*.sql  text eol=lf
+*.java text eol=lf
+*.xml  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.ts   text eol=lf
+*.vue  text eol=lf
+*.js   text eol=lf
+*.css  text eol=lf
+*.scss text eol=lf
+
+# 明确 CRLF 的文本（只在 Windows 上执行的脚本）
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# 二进制：不做换行转换、不做 diff
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.svg  -text
+*.pdf  binary
+*.jar  binary
+*.war  binary
+*.docx binary
+*.xlsx binary
+*.xls  binary
+*.pptx binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.otf  binary
+
+# 语言统计：把 vue 当 vue 而不是 html
+*.vue linguist-language=Vue
+*.java linguist-detectable=true
+frontend/package-lock.json linguist-generated=true
