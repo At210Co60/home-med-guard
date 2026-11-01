@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.homemedguard.mapper.report.StockReportMapper">
+
+    <!--
+      报表 SQL 只碰 ② 自己的表：stock_batch / disposal_record / family_drug。
+      两点容易踩：
+        1) 手写语句里 MyBatis-Plus 的逻辑删除不会自动生效，deleted = 0 必须自己带上；
+        2) 用 YEAR()*100+MONTH() 而不是 DATE_FORMAT()，MySQL 8 与 H2(MODE=MySQL) 都认，
+           CI 的内存库和线上才不会各算一套。
+    -->
+
+    <select id="selectPurchasedMonthly" resultType="com.homemedguard.service.report.vo.MonthAmount">
+        SELECT YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date) AS ym,
+               SUM(b.purchase_price * b.initial_quantity) AS amount
+        FROM stock_batch b
+        WHERE b.family_id = #{familyId}
+          AND b.deleted = 0
+          AND b.purchase_date IS NOT NULL
+          AND b.purchase_price IS NOT NULL
+          AND YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date) BETWEEN #{startYm} AND #{endYm}
+        GROUP BY YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date)
+        ORDER BY ym
+    </select>
+
+    <!-- 浪费口径：只算丢弃与交回，效期更正(RENEWED)和已妥善处理(HANDLED)不算损失 -->
+    <select id="selectWasteMonthly" resultType="com.homemedguard.service.report.vo.MonthAmount">
+        SELECT YEAR(d.disposal_date) * 100 + MONTH(d.disposal_date) AS ym,
+               SUM(d.amount) AS amount
+        FROM disposal_record d
+        WHERE d.family_id = #{familyId}
+          AND d.action IN ('DISPOSED', 'RETURNED')
+          AND d.amount IS NOT NULL
+          AND YEAR(d.disposal_date) * 100 + MONTH(d.disposal_date) BETWEEN #{startYm} AND #{endYm}
+        GROUP BY YEAR(d.disposal_date) * 100 + MONTH(d.disposal_date)
+        ORDER BY ym
+    </select>
+
+    <select id="selectExpenseByCategory" resultType="com.homemedguard.service.report.vo.CategoryExpense">
+        SELECT YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date) AS ym,
+               COALESCE(f.dosage_form, '未标注') AS category,
+               SUM(b.purchase_price * b.initial_quantity) AS amount,
+               COUNT(*) AS batches
+        FROM stock_batch b
+        JOIN family_drug f ON f.id = b.family_drug_id AND f.deleted = 0
+        WHERE b.family_id = #{familyId}
+          AND b.deleted = 0
+          AND b.purchase_date IS NOT NULL
+          AND b.purchase_price IS NOT NULL
+          AND YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date) BETWEEN #{startYm} AND #{endYm}
+        GROUP BY YEAR(b.purchase_date) * 100 + MONTH(b.purchase_date), COALESCE(f.dosage_form, '未标注')
+        ORDER BY ym, amount DESC
+    </select>
+
+</mapper>
