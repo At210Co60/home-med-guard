@@ -7,9 +7,14 @@ spring:
   flyway:
     enabled: true
 
-# 证明模块可以单独关掉而系统照常启动（CONTRIBUTING §6.8）
 app:
+  auth:
+    jwt-secret: ZGV2LW9ubHktand0LXNlY3JldC1kby1ub3QtdXNlLTMyYiE=
+  crypto:
+    data-key: ZGV2LW9ubHktZGF0YS1rZXktZG8tbm90LXVzZS0zMmI=
   module:
+    family: false
+    drug: false
     rule: false
     schedule: false
 

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,10 +40,22 @@ public class ContextBuilder {
         Double ageYears = member.birthDate() == null ? null
                 : Double.valueOf(ChronoUnit.YEARS.between(member.birthDate(), today));
         Set<String> tags = derivedTags(member, ageYears);
+        Set<String> allergies = normalizeAllergies(member, rules, unresolved);
 
         return new RiskContext(member.familyId(), member.memberId(), ageYears, member.weightKg(),
-                tags, member.allergyComponentCodes(), member.liverGrade(), member.renalEgfr(), doses,
+                tags, allergies, member.liverGrade(), member.renalEgfr(), doses,
                 request.targets() == null ? Set.of() : Set.copyOf(request.targets()), unresolved);
+    }
+
+    /** ① 交来的是过敏史原文，归一化不到标准成分就明说"确认不了"，不能当没过敏。 */
+    private static Set<String> normalizeAllergies(MemberContextDTO member, RuleSet rules, List<String> unresolved) {
+        Set<String> codes = new LinkedHashSet<>();
+        for (String term : member.allergyTerms()) {
+            rules.normalize(term)
+                    .ifPresentOrElse(codes::add,
+                            () -> unresolved.add("过敏史里的「" + term + "」不在成分库内，无法确认是否与在服成分冲突"));
+        }
+        return codes;
     }
 
     private void fromDrug(RuleSet rules, DoseInput item, int times, Map<String, BigDecimal> doses, List<String> unresolved) {
@@ -57,7 +70,10 @@ public class ContextBuilder {
         }
         for (RuleSet.DrugComponentView view : views) {
             if (!"CONFIRMED".equalsIgnoreCase(view.resolveStatus())) {
-                unresolved.add(view.componentCode() + " 的成分含量待人工确认，结果可能不完整");
+                unresolved.add(view.componentCode() + " 每单位含量待人工录入，未纳入叠加计算");
+            }
+            if (view.contentPerForm() == null || view.contentPerForm().signum() == 0) {
+                continue;
             }
             BigDecimal perFormMg = UnitConverter.toMilligrams(view.contentPerForm(), rules.unitOf(view.componentCode()));
             accumulate(doses, view.componentCode(), perFormMg.multiply(item.doseAmount()).multiply(BigDecimal.valueOf(times)));
