@@ -1,5 +1,6 @@
 package com.homemedguard.common.contract;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -7,8 +8,9 @@ import java.util.Set;
  * 成员评估上下文：② 规则引擎判禁忌人群、算儿童剂量的唯一入参来源。
  * 只允许携带判定所需的标签码与分级，禁止塞病历原文（快照会落 risk_evaluation_log）。
  *
- * @param tagCodes             禁忌标签码，如 PREGNANT / LACTATING / CHILD / EPILEPSY
+ * @param tagCodes              禁忌标签码，如 PREGNANT / LACTATING / CHILD / EPILEPSY
  * @param allergyComponentCodes 过敏史已归一化到标准成分码；未归一化的原始文本留在 ① 侧
+ * @param weightKg              最近一次体重，儿童按 mg·kg⁻¹·d⁻¹ 上限判定必需，缺则 ② 标记判定不完整
  * @param liverGrade            Child-Pugh A/B/C，未知为 null
  * @param renalEgfr             eGFR mL·min⁻¹·1.73m⁻²，未知为 null（② 侧按保守策略处理）
  */
@@ -17,6 +19,7 @@ public record MemberContextDTO(
         Long familyId,
         String displayName,
         LocalDate birthDate,
+        BigDecimal weightKg,
         Set<String> tagCodes,
         Set<String> allergyComponentCodes,
         String liverGrade,
