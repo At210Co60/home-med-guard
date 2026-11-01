@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -47,6 +48,13 @@ public class GlobalExceptionHandler {
                 .toList();
         return ResponseEntity.status(ErrorCode.PARAM_INVALID.httpStatus())
                 .body(Result.fail(ErrorCode.PARAM_INVALID, ErrorCode.PARAM_INVALID.message(), fields));
+    }
+
+    /** @PreAuthorize 拒绝必须给 403，不能被下面的兜底 handler 报成 500。 */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Result<Void>> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("越权访问被拒：{}", ex.getMessage());
+        return ResponseEntity.status(ErrorCode.FORBIDDEN.httpStatus()).body(Result.fail(ErrorCode.FORBIDDEN));
     }
 
     /** 请求体不是合法 JSON 属于客户端错误，不能算系统内部错误。 */
