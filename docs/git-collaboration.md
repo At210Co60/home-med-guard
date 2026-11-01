@@ -7,12 +7,12 @@
 
 ## 0. 先记住这 7 条（TL;DR）
 
-1. **`main` 只进 PR，不直接 push**（仓库设置里加分支保护后，物理上推不上去）。
+1. **进 `main` 两条路都行**：日常直推 `main`（推之前 `git pull --rebase` + 本地构建过），跨模块改动开 PR 留个记录。三个人的权限都是 Write，不存在"推不上去"。
 2. **一人一个 `feat/...` 分支，活不过 3 天**；每天开工、收工各 `git pull --rebase` 一次。
 3. **共享文件单人守门**（`pom.xml`、`application*.yml`、`package.json`、`router/index.ts`、`V1__init.sql`）——见 §5，冲突 90% 出在这些文件上。
 4. **Flyway 迁移号按人分段**（V1–V9 / V10–V19 / V20–29 / V30–39 / V40–49 / V50–59），规则种子数据用 `R__` 可重复迁移。
 5. **`Squash and merge`** 合并，`main` 保持线性，rebase 才不会天天打架。
-6. **⚠️ 完全模块化**：模块之间互不影响，但数据可通——这是本项目的第一设计红线，见 §6。
+6. **模块之间互不影响，但数据可通**：这是技术约定，不是审批门槛，见 §6。
 7. **公有仓库红线**：`application-local.yml`、密码、真实健康数据、`target/`、`node_modules/` 永不入库（`.gitignore` 已备好）。
 
 ---
@@ -205,7 +205,7 @@ cd frontend && npm run build && cd ..
 # 5) 推分支
 git push -u origin HEAD                      # 首次；之后同一分支直接 git push
 
-# 6) 开 PR：终端会打印 "Create a pull request" 链接 → 点开 → 选 reviewer → 等 Approve
+# 6) 日常到上一步就完事了（直推 main）；想要评审记录再开 PR：gh pr create --fill
 #    → Squash and merge → Delete branch
 
 # 7) 同步回本地并清理
@@ -314,7 +314,7 @@ docs/defense-slides
 
 **先按"文件/目录"划界，而不是按"功能"划界。** 每个人在自己的一片目录里随便改，跨界的文件走 PR + 打招呼。
 
-| 区域 | 路径 | 守门人 | 规则 |
+| 区域 | 路径 | 主要负责人 | 约定 |
 |---|---|---|---|
 | 工程底座/依赖/打包 | `pom.xml`、`.mvn/`、`.github/`、`mvnw*` | **A（你）** | 别人不直接改，需要加依赖就开 issue 或 PR，由 A 合并 |
 | 配置 | `src/main/resources/application*.yml` | **A** | 同上；`application-local.yml` 不入库 |
@@ -343,16 +343,16 @@ Flyway 版本号全局唯一，两人同时写 `V2__` 就是必冲突。预分�
 
 ---
 
-## 6. ⚠️ 警戒：完全模块化开发（模块之间互不影响，但数据可通）
+## 6. 模块约定：完全模块化开发（模块之间互不影响，但数据可通）
 
-> **本项目第一铁律：完全模块化开发 —— 模块与模块之间互不影响，但数据可通。**
+> **技术约定：完全模块化开发 —— 模块与模块之间互不影响，但数据可通。**
 >
 > - **互不影响**：每个模块可以单独开发、单独编译、单独测试、单独替换、单独开关；一个模块的 bug、崩溃、性能问题，不允许拖垮其他模块。
 > - **数据可通**：模块之间共享同一套数据库与接口契约，数据必须能按契约在模块之间流转；共享的是"数据的定义"，不是"数据的写入权"。
 >
 > 这句话不是口号，是验收项：**M2 之后，任意关掉一个模块的开关，系统必须仍能启动，其他模块功能不受影响。**
 
-### 6.1 落地约束（违反任何一条，PR 直接打回）
+### 6.1 落地约束（不照做会互相踩代码，返工成本远高于遵守）
 
 1. **一个模块 = 一个包 + 一组表 + 自己的 Controller/Service/Mapper + 自己的前端目录。**
    后端：`com.homemedguard.service.<module>`；前端：`frontend/src/views/<module>/`；表前缀按模块命名。
@@ -390,7 +390,7 @@ public class ReminderService {
 // ❌ 错误：直接注入别的模块的 Mapper、跨模块查表
 @Service
 public class ReminderService {
-    private final StockBatchMapper stockBatchMapper;  // 跨模块直连，打回
+    private final StockBatchMapper stockBatchMapper;  // 跨模块直连：以后改一张表要牵动三个人的分支
     public void x() { stockBatchMapper.selectList(null); }
 }
 
@@ -424,7 +424,7 @@ public class StockModuleConfig { ... }
 | **B** | M2 库存+双轨效期+三级预警+处置；M6 报表与后台 | `service/expiry` `service/stock` `job/expiry` `mapper/report` `service/report` | 库存/预警/处置/统计报表 | V10–19、V50–59 | M2 是第一个可演示版本，优先做 |
 | **C** | M4 排程求解+打卡依从性；M5 余量+复诊+急救+召回 | `service/schedule` `service/reminder` `service/forecast` `job/schedule` | 医嘱方案/时间表/打卡/复诊/急救 | V30–39、V40–49 | 前端公共组件（拦截器、权限指令、图表封装）也归 C |
 
-交叉点处理（按 §6 的模块化铁律，提前说好）：
+交叉点处理（按 §6 的模块约定，提前说好）：
 
 - **`service/stock` 包**：B 管批次与消耗（`StockBatch*`、`Consume*`），C 的余量推算放**独立模块包** `service/forecast/`，只通过 B 暴露的 `StockQueryFacade` 拿数据，**不注入 B 的 Mapper、不写 `stock_batch`**。
 - **规则种子数据**：三人按药品类别分头整理（B 家庭常备药、C 慢病药、A 特殊人群），各写 `R__seed_rule_<类别>.sql`，A 终审合并——不同文件，天然无冲突。
@@ -460,7 +460,7 @@ git fetch origin
 git rebase origin/main
 git push -u origin HEAD
 
-# ---- 开 PR → 他人 Approve → Squash and merge → 删分支 ----
+# ---- 想要评审记录就开 PR 自己合；否则上一步直推 main 已完成 ----
 ```
 
 纪律：
@@ -500,9 +500,9 @@ git push -u origin HEAD
 - [ ] 没有出现"诊断""安全用药已确认"等违规表述，风险页有免责声明
 - [ ] 接口变更同步了 `types/api.d.ts`
 - [ ] 迁移号段没有越界
-- [ ] **符合 §6 模块化铁律**：无跨模块 Mapper、无跨模块写表、无循环依赖
+- [ ] 符合 §6 模块约定：无跨模块 Mapper、无跨模块写表、无循环依赖
 
-**谁能合**：自己开 PR、别人 approve 后由作者自己 Squash merge（3 人团队不必让 A 当唯一合并口，A 只守 §5 的共享文件）。
+**谁能合**：谁的改动谁自己合，不需要别人 approve。合并方式由作者定：想让自己的提交署名留在 `main` 上，就用 merge commit 而不是 squash（squash 会把作者算成 PR 发起人）。§5 的共享文件也不再设"唯一合并口"，改完在提交信息里写清即可。
 
 ---
 
@@ -635,7 +635,7 @@ GitHub → Releases 基于 tag 写"本版可演示功能 + 启动步骤 + 已知
 1. 每人 `git switch -c docs/hello-<name>`，新建 `docs/hello-<name>.md` 写一句话。
 2. `git add` → `commit -m "docs: hello from <name>"` → `push -u origin HEAD`。
 3. 网页开 PR，指定另一人 review。
-4. reviewer 点 `Approve` → 作者点 `Squash and merge` → 删分支。
+4. 作者自己合（需要评审时让队友点 Approve，但不强制）→ 删分支。
 5. 三人 `git switch main && git pull --rebase`，看到三个 hello 文件都在。
 
 演练顺带验证 §1.2 的写权限是否真的生效、§3.3 的上传流程是否跑得通。
@@ -661,6 +661,6 @@ GitHub → Releases 基于 tag 写"本版可演示功能 + 启动步骤 + 已知
 | §三 数据库表清单 | §5 迁移号段表 + §7 分工 |
 | §六 建议分期 M1–M6 | §7 三人分工、§13 tag、§16 节奏 |
 | §七 风险（密码、公开仓库、假数据） | §12 保密与忽略 |
-| 项目架构要求 | §6 完全模块化开发铁律 |
+| 项目架构要求 | §6 模块化约定 |
 
 > 有任何与 `handoff.md` 冲突的地方，以 `handoff.md` 的技术选型为准，本手册只补协作流程与模块化约束。

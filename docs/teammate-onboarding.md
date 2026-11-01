@@ -118,7 +118,7 @@ git push -u origin HEAD
 # 同一分支以后继续提交，直接 git push 即可（不用再加 -u）
 
 # ⑥ 网页开 PR：标题同提交信息；base = main；reviewer 选 A 或另一个队友 → Create pull request
-# ⑦ 拿到 1 个 Approve 后，作者自己点 "Squash and merge" → "Delete branch"
+# ⑦ 自己合：直推 main 就到此为止；开了 PR 就自己点合并（想保留署名用 merge commit）→ 删分支
 # ⑧ 回本地同步
 git switch main
 git pull --rebase
@@ -134,7 +134,7 @@ git branch -d feat/stock-batch-fefo
 - [ ] GitHub 上能看到你的分支，以及一个指向 `main` 的 PR
 - [ ] PR 的 `Files changed` 里**没有** `application-local.yml`、`target/`、`node_modules/`、`static/`、大于 5MB 的文件
 - [ ] 本地 `mvn package` / `npm run build` 通过，PR 里的 CI 是绿的
-- [ ] 1 人 Approve 后已 `Squash and merge`，源分支已删除
+- [ ] 已合进 main（直推或 PR 都行），源分支已删除
 
 ---
 
@@ -160,9 +160,9 @@ git branch -d feat/stock-batch-fefo
 
 ## 8. 三条不能破的规矩
 
-1. **`main` 只进 PR**：不直接推、不强推；合并用 Squash and merge。
-2. **模块化铁律**：模块之间互不影响、数据可通——不跨模块注入别人 Mapper、不跨模块写别人的表、不跨模块 JOIN 私有表；只走对方暴露的 `XxxFacade` + DTO，或领域事件。`common/` 不放业务。详见 [git-collaboration.md §6](git-collaboration.md)。
-3. **共享文件先打招呼**：`pom.xml`、`application*.yml`、`frontend/package.json`、`router/index.ts`、`V1__init.sql`、`types/api.d.ts` 由守门人改。
+1. **进 `main` 两条路**：日常直推 `main`（推前先 `git pull --rebase`），跨模块改动开 PR 留记录。你的权限是 **Write，能推分支也能推 main**；真推不动基本都是凭据存了别人的账号或 schannel 证书报错，见 git-collaboration 的排错表，别以为是自己没权限。
+2. **模块约定**：模块之间互不影响、数据可通——不跨模块注入别人 Mapper、不跨模块写别人的表、不跨模块 JOIN 私有表；只走对方暴露的 `XxxFacade` + DTO，或领域事件。`common/` 不放业务。这条留着是因为它真的管用：M2 那 2985 行从最新 main 切出去，零冲突合入。详见 [git-collaboration.md §6](git-collaboration.md)。
+3. **共享文件谁需要谁改**：`pom.xml`、`application*.yml`、`frontend/package.json`、`router/index.ts`、`types/api.d.ts` 改完在提交信息里写清就行，不用等谁点头。**唯一的硬限制**：已经合进 `main` 的 `V*.sql` 不能改内容（Flyway 校验 checksum，改了全队启动报错），要改就新开一个版本号。
    Flyway 号段：**B = V10–V19、V50–V59；C = V30–V39、V40–V49**；种子数据写 `R__seed_*.sql`。
 
 ---
@@ -182,7 +182,7 @@ git switch main && git pull --rebase
 git switch -c feat/<模块>-<描述>
 git add -p && git commit -m "feat(<scope>): 说明"
 git fetch origin && git rebase origin/main
-git push -u origin HEAD      # 然后网页开 PR → Approve → Squash and merge
+git push                     # 直推 main；想留评审记录就 git push -u origin HEAD 再开 PR
 ```
 
 > 记不住就记一句：**推到自己的分支，让 main 通过 PR 合并你；永远不直接推 main。**
