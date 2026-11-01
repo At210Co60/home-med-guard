@@ -28,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@WithMockUser(username = "tester", roles = "MEMBER")
 @DisplayName("② 规则引擎端到端（H2 + 契约替身）")
 class RiskEngineIntegrationTest {
 
@@ -93,11 +95,11 @@ class RiskEngineIntegrationTest {
                 public Optional<MemberContextDTO> memberContext(Long memberId) {
                     if (Long.valueOf(10L).equals(memberId)) {
                         return Optional.of(new MemberContextDTO(10L, 1L, "父亲", LocalDate.of(1985, 5, 1),
-                                new BigDecimal("70"), Set.of(), Set.of(), "A", null));
+                                new BigDecimal("70"), Set.of(), List.of(), "A", null));
                     }
                     if (Long.valueOf(11L).equals(memberId)) {
                         return Optional.of(new MemberContextDTO(11L, 1L, "妈妈", LocalDate.of(1992, 3, 1),
-                                new BigDecimal("55"), Set.of("PREGNANT"), Set.of("IBUPROFEN"), null, null));
+                                new BigDecimal("55"), Set.of("PREGNANT"), List.of("布洛芬"), null, null));
                     }
                     return Optional.empty();
                 }

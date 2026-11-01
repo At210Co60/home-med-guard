@@ -47,6 +47,15 @@ springdoc:
     path: /v3/api-docs
 
 app:
+  auth:
+    # 生产用环境变量注入；留空直接启动失败，禁止用示例密钥上线
+    jwt-secret: ${HMG_JWT_SECRET:}
+    access-token-ttl: 2h
+    refresh-token-ttl: 30d
+    invite-ttl: 24h
+  crypto:
+    # 健康数据字段级加密主密钥（base64 的 32 字节），留空且启用 ① 时启动失败
+    data-key: ${HMG_DATA_KEY:}
   module:
     family: true
     drug: true
@@ -79,3 +88,9 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password: ""
+  # 只给本地内存库用的开发密钥，换不来任何真实数据；生产一律走 HMG_JWT_SECRET / HMG_DATA_KEY
+app:
+  auth:
+    jwt-secret: ZGV2LW9ubHktand0LXNlY3JldC1kby1ub3QtdXNlLTMyYiE=
+  crypto:
+    data-key: ZGV2LW9ubHktZGF0YS1rZXktZG8tbm90LXVzZS0zMmI=

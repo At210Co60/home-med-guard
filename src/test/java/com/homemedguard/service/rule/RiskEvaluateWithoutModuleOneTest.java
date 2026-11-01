@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest(properties = "app.module.rule=true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(username = "tester", roles = "MEMBER")
 @DisplayName("② 在、① 缺席")
 class RiskEvaluateWithoutModuleOneTest {
 

@@ -1,5 +1,7 @@
 package com.homemedguard;
 
+import com.homemedguard.config.AuthProperties;
+import com.homemedguard.config.CryptoProperties;
 import com.homemedguard.config.ModuleProperties;
 import org.apache.ibatis.annotations.Mapper;
 import org.mybatis.spring.annotation.MapperScan;
@@ -10,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(ModuleProperties.class)
+@EnableConfigurationProperties({ModuleProperties.class, AuthProperties.class, CryptoProperties.class})
 @MapperScan(basePackages = "com.homemedguard", annotationClass = Mapper.class)
 public class HomeMedGuardApplication {
 

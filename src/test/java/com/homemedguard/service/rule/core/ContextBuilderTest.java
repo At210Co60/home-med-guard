@@ -37,14 +37,15 @@ class ContextBuilderTest {
                 Map.of(APAP, "mg", CAFEINE, "mg"),
                 Map.of(100L, List.of(
                         new RuleSet.DrugComponentView(APAP, new BigDecimal("500"), "片", "CONFIRMED"),
-                        new RuleSet.DrugComponentView(CAFEINE, new BigDecimal("30"), "片", "PENDING"))),
+                        new RuleSet.DrugComponentView(CAFEINE, new BigDecimal("30"), "片", "CONFIRMED"),
+                        new RuleSet.DrugComponentView("PSEUDOEPHEDRINE", BigDecimal.ZERO, "片", "PENDING"))),
                 "test#n0");
     }
 
     private static MemberContextDTO member(LocalDate birthDate, Double weightKg, Set<String> tags,
                                            String liverGrade, Integer renalEgfr) {
         return new MemberContextDTO(10L, 1L, "测试成员", birthDate,
-                weightKg == null ? null : BigDecimal.valueOf(weightKg), tags, Set.of(), liverGrade, renalEgfr);
+                weightKg == null ? null : BigDecimal.valueOf(weightKg), tags, List.of(), liverGrade, renalEgfr);
     }
 
     @Test
@@ -61,7 +62,9 @@ class ContextBuilderTest {
         // 500*2*3 = 3000 来自复方，500*2 = 1000 来自单味填报
         assertThat(context.doseOf(APAP)).isEqualByComparingTo("4000");
         assertThat(context.doseOf(CAFEINE)).isEqualByComparingTo("180");
-        assertThat(context.unresolvedComponents()).anyMatch(note -> note.contains(CAFEINE) && note.contains("待人工确认"));
+        assertThat(context.doseOf("PSEUDOEPHEDRINE")).isEqualByComparingTo("0");
+        assertThat(context.unresolvedComponents())
+                .anyMatch(note -> note.contains("PSEUDOEPHEDRINE") && note.contains("待人工录入"));
     }
 
     @Test
