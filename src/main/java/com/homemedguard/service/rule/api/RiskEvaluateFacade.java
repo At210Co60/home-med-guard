@@ -43,6 +43,10 @@ public interface RiskEvaluateFacade {
                     String sourceDate) {
     }
 
+    /** 说明书里核对过的应急要点，命中 A 级风险时随报告下发（前端做"立即就医"强提示横幅）。 */
+    record EmergencyGuide(String componentCode, String sectionCode, String content, String sourceRef, String sourceDate) {
+    }
+
     /**
      * @param failedRuleCodes    表达式求值失败的规则，前端要显示"本次判定不完整"
      * @param incompleteReasons  缺体重、成分未归一、规则库无该成分上限等客观缺口
@@ -52,6 +56,7 @@ public interface RiskEvaluateFacade {
                   String maxSeverity,
                   boolean blocking,
                   List<RiskItem> items,
+                  List<EmergencyGuide> emergencyGuides,
                   List<String> failedRuleCodes,
                   List<String> incompleteReasons,
                   String disclaimer) {

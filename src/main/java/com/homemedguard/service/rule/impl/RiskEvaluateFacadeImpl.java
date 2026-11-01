@@ -15,6 +15,8 @@ import com.homemedguard.service.rule.core.RiskContext;
 import com.homemedguard.service.rule.core.RuleEvaluator;
 import com.homemedguard.service.rule.core.RuleSet;
 import com.homemedguard.service.rule.core.RuleSetProvider;
+import com.homemedguard.service.rule.core.Severity;
+import com.homemedguard.service.rule.governance.ComponentLeafletService;
 import com.homemedguard.service.rule.entity.RiskEvaluationLogEntity;
 import com.homemedguard.service.rule.mapper.RiskEvaluationLogMapper;
 import org.springframework.beans.factory.ObjectProvider;
@@ -24,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 评估入口。成员上下文一律通过 ① 的契约读取，读不到就明确失败——
@@ -39,6 +43,7 @@ public class RiskEvaluateFacadeImpl implements RiskEvaluateFacade {
     private final RuleEvaluator evaluator;
     private final ObjectProvider<MemberProfileQueryFacade> memberProfiles;
     private final RiskEvaluationLogMapper evaluationLogMapper;
+    private final ComponentLeafletService leafletService;
     private final ObjectMapper objectMapper;
 
     public RiskEvaluateFacadeImpl(RuleSetProvider ruleSetProvider,
@@ -46,12 +51,14 @@ public class RiskEvaluateFacadeImpl implements RiskEvaluateFacade {
                                   RuleEvaluator evaluator,
                                   ObjectProvider<MemberProfileQueryFacade> memberProfiles,
                                   RiskEvaluationLogMapper evaluationLogMapper,
+                                  ComponentLeafletService leafletService,
                                   ObjectMapper objectMapper) {
         this.ruleSetProvider = ruleSetProvider;
         this.contextBuilder = contextBuilder;
         this.evaluator = evaluator;
         this.memberProfiles = memberProfiles;
         this.evaluationLogMapper = evaluationLogMapper;
+        this.leafletService = leafletService;
         this.objectMapper = objectMapper;
     }
 
@@ -88,10 +95,21 @@ public class RiskEvaluateFacadeImpl implements RiskEvaluateFacade {
                         hit.components(), hit.mechanism(), hit.advice(), hit.basis(), hit.evidence(),
                         hit.sourceRef(), hit.sourceDate() == null ? null : hit.sourceDate().toString()))
                 .toList();
+        Severity max = outcome.maxSeverity();
         return new Report(TraceId.current(), outcome.ruleSetStamp(),
-                outcome.maxSeverity() == null ? null : outcome.maxSeverity().name(),
-                outcome.blocking(),
-                items, outcome.failedRuleCodes(), outcome.incompleteReasons(), DISCLAIMER);
+                max == null ? null : max.name(),
+                outcome.blocking(), items, outcome.blocking() ? emergencyGuides(outcome) : List.of(),
+                outcome.failedRuleCodes(), outcome.incompleteReasons(), DISCLAIMER);
+    }
+
+    /** 只在命中 A 级时附应急要点：平时不刷屏，真出事了前端能立刻给出"立即就医"文案。 */
+    private List<EmergencyGuide> emergencyGuides(EvaluationOutcome outcome) {
+        Set<String> involved = new LinkedHashSet<>();
+        outcome.hits().forEach(hit -> involved.addAll(hit.components()));
+        return leafletService.emergencyGuides(involved).stream()
+                .map(view -> new EmergencyGuide(view.componentCode(), view.sectionCode(), view.content(),
+                        view.sourceRef(), view.sourceDate()))
+                .toList();
     }
 
     /** 留痕只用于追溯和报表，写失败不能影响判定结果本身。 */
